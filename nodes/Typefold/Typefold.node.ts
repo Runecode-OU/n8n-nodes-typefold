@@ -12,7 +12,12 @@ import { searchTemplates, typefoldRequest } from "./GenericFunctions";
 const MIME_TYPES: Record<string, string> = {
   pdf: "application/pdf",
   xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  png: "image/png",
+  jpeg: "image/jpeg",
+  webp: "image/webp",
 };
+
+const IMAGE_FORMATS = ["png", "jpeg", "webp"];
 
 interface TemplateLocator {
   mode: string;
@@ -23,7 +28,7 @@ interface TemplateLocator {
 interface Render {
   id: string;
   state: string;
-  result?: { downloadUrl: string };
+  result?: { downloadUrl: string; mediaType?: string };
 }
 
 export class Typefold implements INodeType {
@@ -34,7 +39,7 @@ export class Typefold implements INodeType {
     group: ["output"],
     version: [1],
     subtitle: '={{$parameter["operation"]}}',
-    description: "Render reports and templates to PDF or XLSX with Typefold",
+    description: "Render reports and templates to PDF, XLSX or images with Typefold",
     defaults: {
       name: "Typefold",
     },
@@ -57,19 +62,19 @@ export class Typefold implements INodeType {
           {
             name: "Get Render",
             value: "getRender",
-            description: "Read a render and optionally download its PDF",
+            description: "Read a render and optionally download its file",
             action: "Get a render",
           },
           {
             name: "Render Report",
             value: "renderReport",
-            description: "Render a published template and return the PDF or XLSX file",
+            description: "Render a published template and return the PDF, XLSX or image file",
             action: "Render a report",
           },
           {
             name: "Start Render",
             value: "startRender",
-            description: "Start a PDF render in the background and return its ID and state",
+            description: "Start a render in the background and return its ID and state",
             action: "Start a render",
           },
         ],
@@ -126,12 +131,30 @@ export class Typefold implements INodeType {
         name: "format",
         type: "options",
         options: [
+          { name: "JPEG Image", value: "jpeg" },
           { name: "PDF", value: "pdf" },
+          { name: "PNG Image", value: "png" },
+          { name: "WebP Image", value: "webp" },
           { name: "XLSX", value: "xlsx" },
         ],
         default: "pdf",
-        description: "The file to render; XLSX needs a template with a spreadsheet",
+        description:
+          "The file to render. An image shows one page of the PDF; XLSX needs a template with a spreadsheet.",
         displayOptions: { show: { operation: ["renderReport"] } },
+      },
+      {
+        displayName: "Format",
+        name: "format",
+        type: "options",
+        options: [
+          { name: "JPEG Image", value: "jpeg" },
+          { name: "PDF", value: "pdf" },
+          { name: "PNG Image", value: "png" },
+          { name: "WebP Image", value: "webp" },
+        ],
+        default: "pdf",
+        description: "The file to render. An image shows one page of the PDF.",
+        displayOptions: { show: { operation: ["startRender"] } },
       },
       {
         displayName: "Data",
@@ -167,12 +190,12 @@ export class Typefold implements INodeType {
         displayOptions: { show: { operation: ["getRender"] } },
       },
       {
-        displayName: "Download PDF",
+        displayName: "Download File",
         name: "download",
         type: "boolean",
         default: true,
         description:
-          "Whether to attach the PDF as a file when the render succeeded. Other renders return only their state.",
+          "Whether to attach the PDF or image when the render succeeded. Other renders return only their state.",
         displayOptions: { show: { operation: ["getRender"] } },
       },
 
@@ -191,6 +214,34 @@ export class Typefold implements INodeType {
             default: "",
             description: "The output file's name. Defaults to the template's name.",
             displayOptions: { show: { "/operation": ["renderReport", "getRender"] } },
+          },
+          {
+            displayName: "Image Page",
+            name: "imagePage",
+            type: "number",
+            typeOptions: { minValue: 1 },
+            default: 1,
+            description: "The page an image shows, from 1. Images only.",
+            displayOptions: { show: { "/operation": ["renderReport", "startRender"] } },
+          },
+          {
+            displayName: "Image Width",
+            name: "imageWidth",
+            type: "number",
+            typeOptions: { minValue: 16, maxValue: 4096 },
+            default: 800,
+            description:
+              "The image's width in pixels, from 16 to 4096; the height follows the page's shape. Without it, the image is as wide as the page. Images only.",
+            displayOptions: { show: { "/operation": ["renderReport", "startRender"] } },
+          },
+          {
+            displayName: "JPEG Quality",
+            name: "jpegQuality",
+            type: "number",
+            typeOptions: { minValue: 1, maxValue: 100 },
+            default: 90,
+            description: "The JPEG image's quality, from 1 to 100. JPEG only.",
+            displayOptions: { show: { "/operation": ["renderReport", "startRender"] } },
           },
           {
             displayName: "Locale",
@@ -214,7 +265,7 @@ export class Typefold implements INodeType {
             type: "boolean",
             default: false,
             description:
-              'Whether to render a free test PDF with a "TEST" watermark on every page. Test renders do not count against your plan. PDF only.',
+              'Whether to render a free test document with a "TEST" watermark on every page. Test renders do not count against your plan. PDF and images only.',
             displayOptions: { show: { "/operation": ["renderReport", "startRender"] } },
           },
           {
@@ -234,7 +285,7 @@ export class Typefold implements INodeType {
             default: "",
             placeholder: "e.g. COPY",
             description:
-              "One line of text drawn across every page, such as COPY or DRAFT. PDF only; Latin, Greek or Cyrillic letters.",
+              "One line of text drawn across every page, such as COPY or DRAFT. PDF and images only; Latin, Greek or Cyrillic letters.",
             displayOptions: { show: { "/operation": ["renderReport", "startRender"] } },
           },
         ],
@@ -304,13 +355,15 @@ async function renderReport(
     body.locale = options.locale;
   }
 
-  if (options.test && format === "pdf") {
+  if (options.test && format !== "xlsx") {
     body.test = true;
   }
 
-  if (options.watermarkText && format === "pdf") {
+  if (options.watermarkText && format !== "xlsx") {
     body.pdf = { watermark: { text: options.watermarkText } };
   }
+
+  addImageOptions(body, format, options);
 
   const file = (await typefoldRequest.call(this, "POST", "/v1/reports/render", {
     body,
@@ -362,6 +415,14 @@ async function startRender(
     body.watermark = { text: options.watermarkText };
   }
 
+  const format = this.getNodeParameter("format", i, "pdf") as string;
+
+  if (format !== "pdf") {
+    body.format = format;
+  }
+
+  addImageOptions(body, format, options);
+
   if (options.waitSeconds) {
     body.waitMs = Math.round((options.waitSeconds as number) * 1000);
   }
@@ -393,14 +454,17 @@ async function getRender(
     encoding: "arraybuffer",
   })) as ArrayBuffer;
   const binaryPropertyName = (options.binaryPropertyName as string) || "data";
+  const mimeType = render.result.mediaType ?? MIME_TYPES.pdf;
+  const extension =
+    Object.keys(MIME_TYPES).find((format) => MIME_TYPES[format] === mimeType) ?? "pdf";
 
   return {
     json: render as unknown as IDataObject,
     binary: {
       [binaryPropertyName]: await this.helpers.prepareBinaryData(
         Buffer.from(file),
-        `${(options.fileName as string) || render.id}.pdf`,
-        MIME_TYPES.pdf,
+        `${(options.fileName as string) || render.id}.${extension}`,
+        mimeType,
       ),
     },
     pairedItem: { item: i },
@@ -444,6 +508,31 @@ async function publishedVersionId(this: IExecuteFunctions, i: number): Promise<s
   }
 
   return found.publishedVersionId;
+}
+
+/** Adds the page, width and quality an image format uses; other formats take none. */
+function addImageOptions(body: IDataObject, format: string, options: IDataObject): void {
+  if (!IMAGE_FORMATS.includes(format)) {
+    return;
+  }
+
+  const image: IDataObject = {};
+
+  if (options.imagePage) {
+    image.page = options.imagePage;
+  }
+
+  if (options.imageWidth) {
+    image.width = options.imageWidth;
+  }
+
+  if (options.jpegQuality && format === "jpeg") {
+    image.quality = options.jpegQuality;
+  }
+
+  if (Object.keys(image).length > 0) {
+    body.image = image;
+  }
 }
 
 function parseData(this: IExecuteFunctions, i: number): IDataObject {

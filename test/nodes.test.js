@@ -104,6 +104,50 @@ test("Render Report sends the template by name and returns the file", async () =
   assert.equal(item.binary.data.data.toString(), "%PDF");
 });
 
+test("Render Report renders an image with its page, width and quality", async () => {
+  const ctx = context({
+    parameters: {
+      operation: "renderReport",
+      template: { mode: "list", value: "t1", cachedResultName: "Billing/Invoice" },
+      format: "jpeg",
+      data: "{}",
+      options: { test: true, watermarkText: "COPY", imagePage: 2, imageWidth: 600, jpegQuality: 70 },
+    },
+    respond: () => ({ statusCode: 200, body: new Uint8Array([0xff, 0xd8]).buffer }),
+  });
+
+  const [[item]] = await new Typefold().execute.call(ctx);
+
+  assert.deepEqual(ctx.requests[0].body, {
+    format: "jpeg",
+    template: { id: "t1" },
+    data: {},
+    test: true,
+    pdf: { watermark: { text: "COPY" } },
+    image: { page: 2, width: 600, quality: 70 },
+  });
+  assert.equal(item.binary.data.fileName, "Invoice.jpeg");
+  assert.equal(item.binary.data.mimeType, "image/jpeg");
+});
+
+test("Start Render sends an image format but no quality outside JPEG", async () => {
+  const ctx = context({
+    parameters: {
+      operation: "startRender",
+      source: "html",
+      html: "<h1>Hi</h1>",
+      format: "png",
+      options: { imageWidth: 1200, jpegQuality: 70 },
+    },
+    respond: () => ({ statusCode: 202, body: { id: "r1", state: "queued" } }),
+  });
+
+  await new Typefold().execute.call(ctx);
+
+  assert.equal(ctx.requests[0].body.format, "png");
+  assert.deepEqual(ctx.requests[0].body.image, { width: 1200 });
+});
+
 test("API errors carry the API message, also for file responses", async () => {
   const body = Buffer.from(
     JSON.stringify({ error: { code: "NOT_FOUND", message: "No such report.", retryable: false } }),
@@ -181,6 +225,28 @@ test("Get Render downloads a succeeded render without the API key", async () => 
 
   assert.equal(item.binary.data.fileName, "r1.pdf");
   assert.equal(ctx.requests[1].url, "https://storage.test/r1.pdf");
+});
+
+test("Get Render names a downloaded image after its type", async () => {
+  const ctx = context({
+    parameters: { operation: "getRender", renderId: "r1", download: true, options: {} },
+    respond: ({ url }) =>
+      url === "https://storage.test/r1"
+        ? { statusCode: 200, body: new Uint8Array([0x89, 0x50]).buffer }
+        : {
+            statusCode: 200,
+            body: {
+              id: "r1",
+              state: "succeeded",
+              result: { downloadUrl: "https://storage.test/r1", mediaType: "image/webp" },
+            },
+          },
+  });
+
+  const [[item]] = await new Typefold().execute.call(ctx);
+
+  assert.equal(item.binary.data.fileName, "r1.webp");
+  assert.equal(item.binary.data.mimeType, "image/webp");
 });
 
 test("the trigger registers, replaces and deletes its endpoint", async () => {
