@@ -1,5 +1,5 @@
 {
-  "node": "n8n-nodes-typefold.typefoldTrigger",
+  "node": "@typefold/n8n-nodes-typefold.typefoldTrigger",
   "nodeVersion": "1.0",
   "codexVersion": "1.0",
   "categories": ["Utility"],

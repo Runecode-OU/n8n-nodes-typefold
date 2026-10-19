@@ -19,7 +19,7 @@ function sign(id, timestamp, body, secret = SECRET) {
 /** A context whose HTTP requests are answered by `respond(request)` as `{ statusCode, body }`. */
 function context({ parameters = {}, staticData = {}, respond, items = [{ json: {} }] }) {
   const requests = [];
-  const node = { name: "Typefold", type: "n8n-nodes-typefold.typefold" };
+  const node = { name: "Typefold", type: "@typefold/n8n-nodes-typefold.typefold" };
   const request = async (options) => {
     requests.push(options);
 

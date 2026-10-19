@@ -1,5 +1,5 @@
 {
-  "name": "n8n-nodes-typefold",
+  "name": "@typefold/n8n-nodes-typefold",
   "version": "0.1.0",
   "description": "n8n nodes for Typefold: render reports and templates to PDF or XLSX, and start workflows when a render finishes.",
   "keywords": [
@@ -52,5 +52,8 @@
       "dist/nodes/Typefold/Typefold.node.js",
       "dist/nodes/TypefoldTrigger/TypefoldTrigger.node.js"
     ]
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

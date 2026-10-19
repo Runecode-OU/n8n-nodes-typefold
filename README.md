@@ -1,11 +1,11 @@
-# n8n-nodes-typefold
+# @typefold/n8n-nodes-typefold
 
 [n8n](https://n8n.io) nodes for [Typefold](https://typefold.dev): render your published templates
 to PDF or XLSX inside a workflow, and start a workflow when a render finishes.
 
 ## Install
 
-In n8n, open **Settings → Community nodes**, select **Install** and enter `n8n-nodes-typefold`.
+In n8n, open **Settings → Community nodes**, select **Install** and enter `@typefold/n8n-nodes-typefold`.
 See n8n's [community nodes guide](https://docs.n8n.io/integrations/community-nodes/installation/).
 
 ## Nodes
