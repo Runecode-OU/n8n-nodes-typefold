@@ -2,7 +2,7 @@ const assert = require("node:assert/strict");
 const { createHmac } = require("node:crypto");
 const { test } = require("node:test");
 const { NodeApiError } = require("n8n-workflow");
-const { verifySignature } = require("../dist/nodes/Typefold/GenericFunctions");
+const { searchTemplates, verifySignature } = require("../dist/nodes/Typefold/GenericFunctions");
 const { Typefold } = require("../dist/nodes/Typefold/Typefold.node");
 const { TypefoldTrigger } = require("../dist/nodes/TypefoldTrigger/TypefoldTrigger.node");
 
@@ -75,6 +75,30 @@ test("verifySignature rejects old timestamps and missing headers", () => {
 
   assert.equal(verifySignature(SECRET, headers, Buffer.from(body)), false);
   assert.equal(verifySignature(SECRET, {}, Buffer.from(body)), false);
+});
+
+test("the template list shows each published template with its folder once", async () => {
+  const ctx = context({
+    respond: () => ({
+      statusCode: 200,
+      body: {
+        items: [
+          { id: "a", name: "Invoice", published: true, folderPath: "Invoice" },
+          { id: "b", name: "Receipt", published: true, folderPath: "Billing/Receipt" },
+          { id: "c", name: "Letter", published: true, folderPath: "Mail" },
+          { id: "d", name: "Quote", published: true },
+          { id: "e", name: "Draft", published: false },
+        ],
+      },
+    }),
+  });
+
+  const { results } = await searchTemplates.call(ctx);
+
+  assert.deepEqual(
+    results.map((item) => item.name),
+    ["Invoice", "Billing/Receipt", "Mail/Letter", "Quote"],
+  );
 });
 
 test("Render Report sends the template by name and returns the file", async () => {

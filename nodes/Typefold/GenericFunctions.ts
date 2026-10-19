@@ -99,10 +99,19 @@ export async function searchTemplates(
       .filter((item) => item.published)
       .filter((item) => !search || item.name.toLowerCase().includes(search))
       .map((item) => ({
-        name: item.folderPath ? `${item.folderPath}/${item.name}` : item.name,
+        name: templatePath(item),
         value: item.id,
       })),
   };
+}
+
+/** The template's name with its folder, such as `Billing/Invoice`, without repeating a folder named after it. */
+function templatePath({ name, folderPath }: { name: string; folderPath?: string }): string {
+  if (!folderPath || folderPath === name || folderPath.endsWith(`/${name}`)) {
+    return folderPath ?? name;
+  }
+
+  return `${folderPath}/${name}`;
 }
 
 /**
