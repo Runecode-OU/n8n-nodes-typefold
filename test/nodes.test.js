@@ -148,6 +148,41 @@ test("Start Render sends an image format but no quality outside JPEG", async () 
   assert.deepEqual(ctx.requests[0].body.image, { width: 1200 });
 });
 
+test("Start Render uploads to a destination, and Get Render skips a render with no copy", async () => {
+  const ctx = context({
+    parameters: {
+      operation: "startRender",
+      source: "html",
+      html: "<h1>Hi</h1>",
+      options: { destinationName: "invoices", destinationPath: "2026/{renderId}.pdf", keepCopy: false },
+    },
+    respond: () => ({ statusCode: 202, body: { id: "r1", state: "queued" } }),
+  });
+
+  await new Typefold().execute.call(ctx);
+
+  assert.deepEqual(ctx.requests[0].body.destination, {
+    name: "invoices",
+    path: "2026/{renderId}.pdf",
+    keepCopy: false,
+  });
+
+  const render = {
+    id: "r1",
+    state: "succeeded",
+    result: { mediaType: "application/pdf", destination: { name: "invoices", key: "2026/r1.pdf" } },
+  };
+  const get = context({
+    parameters: { operation: "getRender", renderId: "r1", download: true, options: {} },
+    respond: () => ({ statusCode: 200, body: render }),
+  });
+
+  const [[item]] = await new Typefold().execute.call(get);
+
+  assert.equal(get.requests.length, 1);
+  assert.equal(item.binary, undefined);
+});
+
 test("API errors carry the API message, also for file responses", async () => {
   const body = Buffer.from(
     JSON.stringify({ error: { code: "NOT_FOUND", message: "No such report.", retryable: false } }),

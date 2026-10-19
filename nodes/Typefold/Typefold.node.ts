@@ -28,7 +28,7 @@ interface TemplateLocator {
 interface Render {
   id: string;
   state: string;
-  result?: { downloadUrl: string; mediaType?: string };
+  result?: { downloadUrl?: string; mediaType?: string };
 }
 
 export class Typefold implements INodeType {
@@ -195,7 +195,7 @@ export class Typefold implements INodeType {
         type: "boolean",
         default: true,
         description:
-          "Whether to attach the PDF or image when the render succeeded. Other renders return only their state.",
+          "Whether to attach the PDF or image when the render succeeded. Other renders, and renders that kept no copy in Typefold, return only their state.",
         displayOptions: { show: { operation: ["getRender"] } },
       },
 
@@ -207,6 +207,26 @@ export class Typefold implements INodeType {
         default: {},
         displayOptions: { show: { operation: ["renderReport", "startRender", "getRender"] } },
         options: [
+          {
+            displayName: "Destination Name",
+            name: "destinationName",
+            type: "string",
+            default: "",
+            placeholder: "e.g. invoices",
+            description:
+              "The storage destination to upload the file to, as named under Manage → Storage destinations in Studio",
+            displayOptions: { show: { "/operation": ["startRender"] } },
+          },
+          {
+            displayName: "Destination Path",
+            name: "destinationPath",
+            type: "string",
+            default: "",
+            placeholder: "e.g. 2026/{renderId}.pdf",
+            description:
+              "The file's path in the destination; {renderId} is replaced with the render's ID. Defaults to the render's ID and the file's extension.",
+            displayOptions: { show: { "/operation": ["startRender"] } },
+          },
           {
             displayName: "File Name",
             name: "fileName",
@@ -242,6 +262,15 @@ export class Typefold implements INodeType {
             default: 90,
             description: "The JPEG image's quality, from 1 to 100. JPEG only.",
             displayOptions: { show: { "/operation": ["renderReport", "startRender"] } },
+          },
+          {
+            displayName: "Keep Copy in Typefold",
+            name: "keepCopy",
+            type: "boolean",
+            default: true,
+            description:
+              "Whether Typefold also keeps the file for download when it uploads it to a destination",
+            displayOptions: { show: { "/operation": ["startRender"] } },
           },
           {
             displayName: "Locale",
@@ -415,6 +444,14 @@ async function startRender(
     body.watermark = { text: options.watermarkText };
   }
 
+  if (options.destinationName) {
+    body.destination = {
+      name: options.destinationName,
+      ...(options.destinationPath ? { path: options.destinationPath } : {}),
+      ...(options.keepCopy === false ? { keepCopy: false } : {}),
+    };
+  }
+
   const format = this.getNodeParameter("format", i, "pdf") as string;
 
   if (format !== "pdf") {
@@ -444,7 +481,7 @@ async function getRender(
     `/v1/renders/${encodeURIComponent(id)}`,
   )) as Render;
 
-  if (!this.getNodeParameter("download", i) || render.state !== "succeeded" || !render.result) {
+  if (!this.getNodeParameter("download", i) || render.state !== "succeeded" || !render.result?.downloadUrl) {
     return { json: render as unknown as IDataObject, pairedItem: { item: i } };
   }
 
