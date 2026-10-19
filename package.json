@@ -1,0 +1,56 @@
+{
+  "name": "n8n-nodes-typefold",
+  "version": "0.1.0",
+  "description": "n8n nodes for Typefold: render reports and templates to PDF or XLSX, and start workflows when a render finishes.",
+  "keywords": [
+    "n8n-community-node-package",
+    "pdf",
+    "reports",
+    "typefold",
+    "xlsx"
+  ],
+  "homepage": "https://typefold.dev/integrations/n8n/",
+  "license": "MIT",
+  "author": {
+    "name": "Runecode OÜ",
+    "email": "legal@runecode.ee"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Runecode-OU/n8n-nodes-typefold.git"
+  },
+  "files": [
+    "dist",
+    "!dist/tsconfig.tsbuildinfo",
+    "LICENSE.md",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "n8n-node build",
+    "dev": "n8n-node dev",
+    "lint": "n8n-node lint",
+    "lint:fix": "n8n-node lint --fix",
+    "test": "n8n-node build && node --test test/*.test.js",
+    "prepublishOnly": "n8n-node lint && n8n-node build",
+    "release": "n8n-node release"
+  },
+  "devDependencies": {
+    "@n8n/node-cli": "0.52.5",
+    "eslint": "9.32.0",
+    "typescript": "5.9.2"
+  },
+  "peerDependencies": {
+    "n8n-workflow": "*"
+  },
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "strict": true,
+    "credentials": [
+      "dist/credentials/TypefoldApi.credentials.js"
+    ],
+    "nodes": [
+      "dist/nodes/Typefold/Typefold.node.js",
+      "dist/nodes/TypefoldTrigger/TypefoldTrigger.node.js"
+    ]
+  }
+}
