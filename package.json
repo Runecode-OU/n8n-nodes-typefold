@@ -1,6 +1,6 @@
 {
   "name": "@typefold/n8n-nodes-typefold",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "n8n nodes for Typefold: render reports and templates to PDF or XLSX, and start workflows when a render finishes.",
   "keywords": [
     "n8n-community-node-package",
