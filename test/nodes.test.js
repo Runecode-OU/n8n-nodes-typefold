@@ -108,7 +108,7 @@ test("Render Report sends the template by name and returns the file", async () =
       template: { mode: "name", value: "Invoices/Invoice" },
       format: "pdf",
       data: '{"total": 5}',
-      options: { test: true, watermarkText: "COPY" },
+      options: { test: true, watermarkText: "COPY", contentSet: " Acme " },
     },
     respond: () => ({ statusCode: 200, body: new TextEncoder().encode("%PDF").buffer }),
   });
@@ -120,6 +120,7 @@ test("Render Report sends the template by name and returns the file", async () =
     format: "pdf",
     template: { name: "Invoices/Invoice" },
     data: { total: 5 },
+    contentSet: "Acme",
     test: true,
     pdf: { watermark: { text: "COPY" } },
   });
@@ -161,7 +162,7 @@ test("Start Render sends an image format but no quality outside JPEG", async () 
       source: "html",
       html: "<h1>Hi</h1>",
       format: "png",
-      options: { imageWidth: 1200, jpegQuality: 70 },
+      options: { imageWidth: 1200, jpegQuality: 70, contentSet: "Acme" },
     },
     respond: () => ({ statusCode: 202, body: { id: "r1", state: "queued" } }),
   });
@@ -170,6 +171,7 @@ test("Start Render sends an image format but no quality outside JPEG", async () 
 
   assert.equal(ctx.requests[0].body.format, "png");
   assert.deepEqual(ctx.requests[0].body.image, { width: 1200 });
+  assert.equal(ctx.requests[0].body.contentSet, undefined);
 });
 
 test("Start Render uploads to a destination, and Get Render skips a render with no copy", async () => {
@@ -237,7 +239,7 @@ test("Start Render renders the published version of a template found by name", a
       source: "template",
       template: { mode: "name", value: "invoice" },
       data: { total: 5 },
-      options: { waitSeconds: 2 },
+      options: { waitSeconds: 2, contentSet: "Acme" },
     },
     respond: ({ url, method }) => {
       if (url.endsWith("/v1/reports")) {
@@ -259,6 +261,7 @@ test("Start Render renders the published version of a template found by name", a
   assert.deepEqual(ctx.requests[2].body, {
     templateVersionId: "v1",
     data: { total: 5 },
+    contentSet: "Acme",
     waitMs: 2000,
   });
   assert.deepEqual(item.json, { id: "r1", state: "queued" });

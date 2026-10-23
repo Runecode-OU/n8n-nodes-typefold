@@ -208,6 +208,19 @@ export class Typefold implements INodeType {
         displayOptions: { show: { operation: ["renderReport", "startRender", "getRender"] } },
         options: [
           {
+            displayName: "Content Set",
+            name: "contentSet",
+            type: "string",
+            default: "",
+            placeholder: "e.g. Acme",
+            description:
+              "The name of one of the template's content sets, such as a customer's, to fill its content fields with. Without it, the template's own content is used.",
+            displayOptions: {
+              show: { "/operation": ["renderReport", "startRender"] },
+              hide: { "/source": ["html"] },
+            },
+          },
+          {
             displayName: "Destination Name",
             name: "destinationName",
             type: "string",
@@ -384,6 +397,8 @@ async function renderReport(
     body.locale = options.locale;
   }
 
+  addContentSet(body, options);
+
   if (options.test && format !== "xlsx") {
     body.test = true;
   }
@@ -435,6 +450,10 @@ async function startRender(
           templateVersionId: await publishedVersionId.call(this, i),
           data: parseData.call(this, i),
         };
+
+  if (source !== "html") {
+    addContentSet(body, options);
+  }
 
   if (options.test) {
     body.test = true;
@@ -545,6 +564,15 @@ async function publishedVersionId(this: IExecuteFunctions, i: number): Promise<s
   }
 
   return found.publishedVersionId;
+}
+
+/** Picks one of the template's content sets by name, when the option is filled in. */
+function addContentSet(body: IDataObject, options: IDataObject): void {
+  const name = typeof options.contentSet === "string" ? options.contentSet.trim() : "";
+
+  if (name) {
+    body.contentSet = name;
+  }
 }
 
 /** Adds the page, width and quality an image format uses; other formats take none. */
