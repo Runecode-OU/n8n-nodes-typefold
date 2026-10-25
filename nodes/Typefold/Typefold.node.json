@@ -6,12 +6,12 @@
   "resources": {
     "credentialDocumentation": [
       {
-        "url": "https://typefold.dev/integrations/n8n/#connect-n8n"
+        "url": "https://docs.typefold.dev/integrations/n8n/#connect-n8n"
       }
     ],
     "primaryDocumentation": [
       {
-        "url": "https://typefold.dev/integrations/n8n/"
+        "url": "https://docs.typefold.dev/integrations/n8n/"
       }
     ]
   }

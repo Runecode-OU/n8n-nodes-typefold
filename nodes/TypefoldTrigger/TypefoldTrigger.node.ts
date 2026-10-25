@@ -69,7 +69,7 @@ export class TypefoldTrigger implements INodeType {
           {
             name: "Render Succeeded",
             value: "render.succeeded",
-            description: "A PDF is ready to download",
+            description: "A render finished and its file is ready to download",
           },
         ],
         default: ["render.succeeded"],

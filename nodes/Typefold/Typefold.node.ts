@@ -63,19 +63,19 @@ export class Typefold implements INodeType {
             name: "Get Render",
             value: "getRender",
             description: "Read a render and optionally download its file",
-            action: "Get a render",
+            action: "Get render",
           },
           {
             name: "Render Report",
             value: "renderReport",
             description: "Render a published template and return the PDF, XLSX or image file",
-            action: "Render a report",
+            action: "Render report",
           },
           {
             name: "Start Render",
             value: "startRender",
             description: "Start a render in the background and return its ID and state",
-            action: "Start a render",
+            action: "Start render",
           },
         ],
         default: "renderReport",
@@ -174,7 +174,7 @@ export class Typefold implements INodeType {
         typeOptions: { rows: 6 },
         default: "",
         required: true,
-        placeholder: "<h1>Hello</h1>",
+        placeholder: "e.g. <h1>Hello</h1>",
         description: "The HTML document to render, with its CSS in a style element",
         displayOptions: { show: { operation: ["startRender"], source: ["html"] } },
       },
@@ -227,7 +227,7 @@ export class Typefold implements INodeType {
             default: "",
             placeholder: "e.g. invoices",
             description:
-              "The storage destination to upload the file to, as named under Manage → Storage destinations in Studio",
+              "The storage destination to upload the file to, as named under Developers → Storage destinations in Studio",
             displayOptions: { show: { "/operation": ["startRender"] } },
           },
           {
@@ -245,6 +245,7 @@ export class Typefold implements INodeType {
             name: "fileName",
             type: "string",
             default: "",
+            placeholder: "e.g. invoice-1001",
             description: "The output file's name. Defaults to the template's name.",
             displayOptions: { show: { "/operation": ["renderReport", "getRender"] } },
           },
@@ -290,6 +291,7 @@ export class Typefold implements INodeType {
             name: "locale",
             type: "string",
             default: "en-US",
+            placeholder: "e.g. de-DE",
             description: "The language and region for numbers, dates and translations",
             displayOptions: { show: { "/operation": ["renderReport"] } },
           },
@@ -610,7 +612,10 @@ function parseData(this: IExecuteFunctions, i: number): IDataObject {
   try {
     return JSON.parse(data || "{}") as IDataObject;
   } catch {
-    throw new NodeOperationError(this.getNode(), "Data is not valid JSON.", { itemIndex: i });
+    throw new NodeOperationError(this.getNode(), "'Data' is not valid JSON", {
+      itemIndex: i,
+      description: 'Enter a JSON object, such as {"customer": "Acme"}, or map one with an expression.',
+    });
   }
 }
 
