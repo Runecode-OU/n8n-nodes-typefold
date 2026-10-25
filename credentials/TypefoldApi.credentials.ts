@@ -13,7 +13,7 @@ export class TypefoldApi implements ICredentialType {
 
   icon: Icon = { light: "file:typefold.svg", dark: "file:typefold.dark.svg" };
 
-  documentationUrl = "https://typefold.dev/integrations/n8n/#connect-n8n";
+  documentationUrl = "https://docs.typefold.dev/integrations/n8n/#connect-n8n";
 
   properties: INodeProperties[] = [
     {
@@ -23,7 +23,7 @@ export class TypefoldApi implements ICredentialType {
       typeOptions: { password: true },
       required: true,
       default: "",
-      description: "A workspace API key, created in Studio under Manage → API keys",
+      description: "A workspace API key, created in Studio under Developers → API keys",
     },
     {
       displayName: "Base URL",

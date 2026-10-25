@@ -1,0 +1,39 @@
+{
+  "name": "Render an invoice with Typefold",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "b1f0d2a4-0c5e-4f7a-9d1b-2a3c4e5f6a01",
+      "name": "When clicking 'Execute workflow'",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "operation": "renderReport",
+        "template": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Invoice"
+        },
+        "format": "pdf",
+        "data": "{\n  \"number\": \"INV-1001\",\n  \"customer\": { \"name\": \"Acme Ltd\" },\n  \"items\": [\n    { \"description\": \"Consulting\", \"quantity\": 2, \"unitPrice\": 450 }\n  ]\n}",
+        "options": {
+          "test": true,
+          "fileName": "INV-1001"
+        }
+      },
+      "id": "b1f0d2a4-0c5e-4f7a-9d1b-2a3c4e5f6a02",
+      "name": "Typefold",
+      "type": "@typefold/n8n-nodes-typefold.typefold",
+      "typeVersion": 1,
+      "position": [220, 0]
+    }
+  ],
+  "connections": {
+    "When clicking 'Execute workflow'": {
+      "main": [[{ "node": "Typefold", "type": "main", "index": 0 }]]
+    }
+  }
+}

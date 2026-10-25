@@ -1,6 +1,6 @@
 {
   "name": "@typefold/n8n-nodes-typefold",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "n8n nodes for Typefold: render reports and templates to PDF or XLSX, and start workflows when a render finishes.",
   "keywords": [
     "n8n-community-node-package",
@@ -9,7 +9,7 @@
     "typefold",
     "xlsx"
   ],
-  "homepage": "https://typefold.dev/integrations/n8n/",
+  "homepage": "https://docs.typefold.dev/integrations/n8n/",
   "license": "MIT",
   "author": {
     "name": "Runecode OÜ",
@@ -35,7 +35,7 @@
     "release": "n8n-node release"
   },
   "devDependencies": {
-    "@n8n/node-cli": "0.52.5",
+    "@n8n/node-cli": "0.53.4",
     "eslint": "9.32.0",
     "typescript": "5.9.2"
   },
